@@ -63,6 +63,8 @@ mod msgbox;
 mod obj;
 mod obj_layout;
 mod obj_style;
+#[cfg(lvgl_qrcode)]
+mod qrcode;
 mod roller;
 mod scale;
 mod screen;
@@ -117,6 +119,8 @@ pub use spinner::Spinner;
 pub use switch::{Switch, SwitchOrientation};
 pub use table::{Table, TableCellCtrl};
 pub use tabview::Tabview;
+#[cfg(lvgl_qrcode)]
+pub use qrcode::Qrcode;
 pub use textarea::Textarea;
 pub use tileview::Tileview;
 pub use value_label::ValueLabel;
@@ -136,6 +140,11 @@ pub enum WidgetError {
     /// LVGL returned a NULL pointer (e.g. out of memory).
     #[error("LVGL: got NULL pointer")]
     LvglNullPointer,
+
+    /// LVGL rejected the request (`LV_RESULT_INVALID`), e.g. QR code data too
+    /// long to encode.
+    #[error("LVGL: invalid request")]
+    LvglInvalid,
 
     /// `heapless::CString` extend failed (text too long for buffer).
     #[error("CString error")]

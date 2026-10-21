@@ -50,6 +50,8 @@ pub use crate::widgets::{
     Spinbox, Spinner, Switch,
     SwitchOrientation, Table, TableCellCtrl, Tabview, TextAlign, Textarea, Tileview, ValueLabel, WidgetError, Win,
 };
+#[cfg(lvgl_qrcode)]
+pub use crate::widgets::Qrcode;
 pub use crate::{
     view::View,
     widgets::{Canvas, lv_color_t, lv_image_dsc_t, lv_point_precise_t},

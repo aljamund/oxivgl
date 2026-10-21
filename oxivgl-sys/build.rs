@@ -196,6 +196,20 @@ fn emit_demo_flags(bindings_path: &Path) {
     }
 }
 
+/// Emit `cargo:qrcode=1` when the application's `lv_conf.h` enabled
+/// `LV_USE_QRCODE` and the QR code declarations therefore reached the bindings.
+/// Via `links = "lv"` this arrives at `oxivgl`'s build script as
+/// `DEP_LV_QRCODE`, which turns it into the `lvgl_qrcode` cfg that gates
+/// `oxivgl::widgets::Qrcode` — the same mechanism as [`emit_demo_flags`], for
+/// the same reason: `LV_USE_QRCODE` defaults to 0, so an ungated wrapper would
+/// break every application that has not enabled it.
+fn emit_qrcode_flags(bindings_path: &Path) {
+    let src = std::fs::read_to_string(bindings_path).unwrap_or_default();
+    if contains_ident(&src, "lv_qrcode_create") {
+        println!("cargo:qrcode=1");
+    }
+}
+
 /// Value of a bindgen-emitted object-like macro. Returns `None` if the constant
 /// is absent or is not a plain integer.
 ///
@@ -344,6 +358,7 @@ fn main() {
         emit_font_flags(&bindings_path);
         emit_stdlib_flags(&bindings_path);
         emit_demo_flags(&bindings_path);
+        emit_qrcode_flags(&bindings_path);
         return;
     }
 
@@ -725,6 +740,9 @@ fn main() {
     // Likewise for the benchmark demo, which only exists when the application
     // asked for it in its lv_conf.h.
     emit_demo_flags(&bindings_path);
+
+    // And for the QR code widget, an LVGL extra that is off by default.
+    emit_qrcode_flags(&bindings_path);
 
     // From the bindings, not a scan of lv_conf.h: the value may arrive via an
     // #include. Getting it wrong is quiet — the sources are absent and the

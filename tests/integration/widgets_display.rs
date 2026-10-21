@@ -94,6 +94,39 @@ fn led_create() {
     assert!(led.get_width() > 0);
 }
 
+// ── Qrcode ───────────────────────────────────────────────────────────────────
+
+#[test]
+fn qrcode_create_and_update() {
+    use oxivgl::style::{color_black, color_white};
+    use oxivgl::widgets::Qrcode;
+
+    let screen = fresh_screen();
+    let qr = Qrcode::new(&screen).unwrap();
+    qr.set_size(100)
+        .set_dark_color(color_black())
+        .set_light_color(color_white())
+        .set_quiet_zone(true);
+    assert!(qr.update(b"https://lvgl.io").is_ok());
+    pump();
+    assert_eq!(qr.get_width(), 100);
+    assert_eq!(qr.get_height(), 100);
+}
+
+#[test]
+fn qrcode_update_rejects_oversized_data() {
+    use oxivgl::widgets::{Qrcode, WidgetError};
+
+    let screen = fresh_screen();
+    let qr = Qrcode::new(&screen).unwrap();
+    qr.set_size(100);
+    // qrcodegen_BUFFER_LEN_MAX is 3918 bytes; no QR version holds more.
+    let too_long = [b'a'; 4000];
+    assert!(matches!(qr.update(&too_long), Err(WidgetError::LvglInvalid)));
+    // The widget stays usable after a rejected update.
+    assert!(qr.update(b"ok").is_ok());
+}
+
 // ── Line ─────────────────────────────────────────────────────────────────────
 
 #[test]

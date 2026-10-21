@@ -977,6 +977,12 @@ leak_widget_test! {
         sw.add_state(ObjState::CHECKED); drop(sw);
     };
 
+    leak_qrcode, "Qrcode", |s| {
+        use oxivgl::widgets::Qrcode;
+        let qr = Qrcode::new(s).unwrap();
+        qr.set_size(80); qr.update(b"https://lvgl.io").unwrap(); drop(qr);
+    };
+
     leak_led, "Led", |s| {
         let led = Led::new(s).unwrap();
         led.on(); led.set_brightness(128); drop(led);

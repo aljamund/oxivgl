@@ -34,6 +34,7 @@ select host SDL2 or an ESP32 board backend — `fire27` (ESP32) or `cores3`
 - [Widgets — Chart](#widgets--chart)
 - [Widgets — Buttonmatrix](#widgets--buttonmatrix)
 - [Widgets — Keyboard](#widgets--keyboard)
+- [Widgets — QR code](#widgets--qr-code)
 - [Widgets — Roller](#widgets--roller)
 - [Widgets — Scale](#widgets--scale)
 - [Widgets — Slider](#widgets--slider)
@@ -912,6 +913,17 @@ OK key hides its label and draws a star image in its place.
 
 ![widget_keyboard3](screenshots/widget_keyboard3.png)
 
+## Widgets — QR code
+
+### QR code 1 — Create a QR code
+
+A 150 px QR code for `https://lvgl.io`, dark blue on light blue, centred, with a
+5 px border in the light colour (a shared style instead of the C example's
+local style setters). Needs `LV_USE_QRCODE 1` in `lv_conf.h`; `Qrcode` only
+exists when it is enabled.
+
+![qrcode_1](screenshots/qrcode_1.png)
+
 ## Widgets — Roller
 
 ### Widget Roller 1 — Month Roller
@@ -1461,6 +1473,7 @@ Status of all [LVGL 9.5 examples](https://docs.lvgl.io/9.5/examples.html) in oxi
 | lottie | 3 | 0 | 0 | Abandoned — ThorVG bloats firmware beyond flash limits (see below) |
 | spinner | 1 | 1 | 0 | |
 | spinbox | 1 | 1 | 0 | |
+| qrcode | 1 | 1 | 0 | needs `LV_USE_QRCODE 1`; `Qrcode` is cfg-gated on it |
 
 ### Widgets Without Wrappers (new in v9.5)
 
@@ -1474,7 +1487,7 @@ Status of all [LVGL 9.5 examples](https://docs.lvgl.io/9.5/examples.html) in oxi
 | | Count |
 |---|---|
 | LVGL examples total | ~193 |
-| oxivgl done | 171 |
+| oxivgl done | 172 |
 | Verified on ESP32 (fire27) | 148/160 |
 | Skipped (intentional) | 1 |
 | New in v9.5 (not ported) | 2 |

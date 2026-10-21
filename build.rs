@@ -58,6 +58,16 @@ fn emit_demo_cfgs() {
     }
 }
 
+/// Turn the `qrcode` metadata emitted by `oxivgl-sys` into the `lvgl_qrcode`
+/// cfg that gates `oxivgl::widgets::Qrcode`, so the wrapper exists exactly when
+/// `LV_USE_QRCODE` put the `lv_qrcode_*` symbols in the bindings.
+fn emit_qrcode_cfgs() {
+    println!("cargo::rustc-check-cfg=cfg(lvgl_qrcode)");
+    if std::env::var_os("DEP_LV_QRCODE").is_some() {
+        println!("cargo::rustc-cfg=lvgl_qrcode");
+    }
+}
+
 fn main() {
     // The examples call m5stack-core's `app_desc!()`, which under the
     // `identity` feature reads M5STACK_CORE_BUILD_MARK via env!(). The macro
@@ -79,6 +89,9 @@ fn main() {
 
     // Benchmark-demo gating, likewise on every build.
     emit_demo_cfgs();
+
+    // QR code widget gating, likewise on every build.
+    emit_qrcode_cfgs();
 
     // docs.rs has no lv_conf.h and oxivgl-sys skips C compilation under DOCS_RS,
     // so skip image asset generation here too — only Rust docs need to render.
