@@ -31,7 +31,12 @@ no-default-features = true
 [lib]
 
 [features]
-default = []
+default = ["example-assets"]
+# Convert and compile the example/test images (examples/assets/*.png) into the crate, so
+# `image_declare!(img_cogwheel_argb)` etc. resolve. Runs LVGL's LVGLImage.py, which needs python3
+# with `pypng` and `lz4`. Applications that do not use those images disable default features and
+# build without Python.
+example-assets = []
 esp-hal = ["dep:esp-hal"]
 esp32 = ["esp-hal/esp32"]
 esp32s3 = ["esp-hal/esp32s3"]

@@ -106,9 +106,12 @@ fn main() {
     // All targets: oxivgl-sys's build.rs (cc crate) compiles LVGL
     // (including lv_calendar_chinese.c) via recursive add_c_files().
 
-    // Image assets (all targets)
-    let cfg = oxivgl_build::ImageConfig::from_env();
-    cfg.image_asset("img_cogwheel_argb", "examples/assets/img_cogwheel_argb.png");
-    cfg.image_asset("img_skew_strip", "examples/assets/img_skew_strip.png");
-    cfg.image_asset("img_star", "examples/assets/img_star.png");
+    // Example/test image assets (all targets). Behind the default `example-assets` feature: the
+    // conversion needs python3 + pypng + lz4, which applications without these images should not.
+    if std::env::var_os("CARGO_FEATURE_EXAMPLE_ASSETS").is_some() {
+        let cfg = oxivgl_build::ImageConfig::from_env();
+        cfg.image_asset("img_cogwheel_argb", "examples/assets/img_cogwheel_argb.png");
+        cfg.image_asset("img_skew_strip", "examples/assets/img_skew_strip.png");
+        cfg.image_asset("img_star", "examples/assets/img_star.png");
+    }
 }

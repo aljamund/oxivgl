@@ -307,6 +307,7 @@ Only widgets actually used are enabled (`LV_USE_<WIDGET> 1`) to minimize binary 
 | `esp32` / `esp32s3` | Select the target chip across the esp-hal family (with `esp-hal`) |
 | `defmt` | `defmt` logging (embedded) |
 | `log-04` | `log` v0.4 logging (host) |
+| `example-assets` (default) | Compile the example/test images (`image_declare!(img_cogwheel_argb)` etc.); needs python3 with `pypng` and `lz4` at build time. Disable default features to build without Python |
 | `png` | PNG snapshot output on host (`Snapshot::write_png`) |
 | `rtos-sem` | Ship `SemaphoreFlushSync`, so the render thread blocks in the scheduler instead of parking the core for the panel transfer |
 | `perf-probe` | Wakeup-latency probe and a once-a-second throughput line, for the threaded pipeline demo |
