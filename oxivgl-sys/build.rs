@@ -88,6 +88,15 @@ fn find_riscv32_esp_elf_gcc() -> Option<PathBuf> {
     None
 }
 
+/// `riscv32-esp-elf-gcc-ar` (or plain `-ar`) next to the located GCC, if present.
+fn riscv32_esp_elf_ar(gcc: &Path) -> Option<PathBuf> {
+    let dir = gcc.parent()?;
+    ["riscv32-esp-elf-gcc-ar", "riscv32-esp-elf-ar"]
+        .iter()
+        .map(|name| dir.join(name))
+        .find(|p| p.is_file())
+}
+
 fn gcc_print_sysroot(gcc: &Path) -> PathBuf {
     let out = Command::new(gcc)
         .arg("-print-sysroot")
@@ -517,6 +526,12 @@ fn main() {
         // Published as `DEP_LV_RISCV_GCC` so `oxivgl-build` compiles image assets with the same
         // compiler instead of cc-rs' default `riscv32-unknown-elf-gcc`.
         println!("cargo:riscv_gcc={}", gcc.display());
+        // The matching archiver: without `AR_<target>`, cc-rs falls back to the host `ar`, which on
+        // macOS writes no symbol index for these ELF objects (`ranlib: ... not a mach-o file`).
+        if let Some(ar) = riscv32_esp_elf_ar(&gcc) {
+            cfg.archiver(&ar);
+            println!("cargo:riscv_ar={}", ar.display());
+        }
         let (march, mabi) = riscv_arch_flags(&target_str).unwrap_or_else(|| {
             panic!(
                 "no -march/-mabi known for {target_str}; add it to riscv_arch_flags \

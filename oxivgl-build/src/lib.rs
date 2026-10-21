@@ -113,6 +113,9 @@ impl ImageConfig {
             if let Ok(gcc) = std::env::var("DEP_LV_RISCV_GCC") {
                 build.compiler(gcc);
             }
+            if let Ok(ar) = std::env::var("DEP_LV_RISCV_AR") {
+                build.archiver(ar);
+            }
         }
         build.compile(&format!("lvgl_img_{name}"));
 
