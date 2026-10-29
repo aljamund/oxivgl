@@ -273,6 +273,25 @@ fn contains_ident(src: &str, ident: &str) -> bool {
     false
 }
 
+/// Top-level directories of the LVGL tree that nothing in this build reads or patches.
+const LVGL_UNUSED_DIRS: &[&str] = &["tests", "docs", "scripts", "examples"];
+
+/// Where the downloaded LVGL tarball is kept between builds: `LVGL_CACHE_DIR`, else
+/// `$CARGO_HOME/oxivgl-sys` (`~/.cargo` by default), else `OUT_DIR`.
+fn lvgl_cache_dir() -> PathBuf {
+    println!("cargo:rerun-if-env-changed=LVGL_CACHE_DIR");
+    if let Some(dir) = env::var_os("LVGL_CACHE_DIR") {
+        return PathBuf::from(dir);
+    }
+    let cargo_home = env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| env::var_os("HOME").map(|h| PathBuf::from(h).join(".cargo")));
+    match cargo_home {
+        Some(dir) => dir.join("oxivgl-sys"),
+        None => PathBuf::from(env::var_os("OUT_DIR").expect("Cargo build scripts always have OUT_DIR")),
+    }
+}
+
 /// Download and extract LVGL source tree into `out_dir/lvgl-{version}/`.
 /// Returns the path to the extracted LVGL root.
 /// Respects `LVGL_SRC_DIR` env var override for local development.
@@ -298,8 +317,9 @@ fn ensure_lvgl_source(out_dir: &Path) -> PathBuf {
         fs::remove_dir_all(&lvgl_dir).expect("Failed to remove stale LVGL tree");
     }
 
-    // Kept beside the tree, so re-extracting after a patch edit costs no download.
-    let cached = out_dir.join(format!("lvgl-{LVGL_VERSION}.tar.gz"));
+    // Kept outside `OUT_DIR` and shared by every build of this crate: the tarball is 97 MB and each
+    // profile, feature set and worktree gets its own `OUT_DIR`, so a copy there is paid for per hash.
+    let cached = lvgl_cache_dir().join(format!("lvgl-{LVGL_VERSION}.tar.gz"));
     let tarball = match fs::read(&cached) {
         Ok(bytes) if format!("{:x}", Sha256::digest(&bytes)) == LVGL_SHA256 => bytes,
         _ => {
@@ -318,17 +338,36 @@ fn ensure_lvgl_source(out_dir: &Path) -> PathBuf {
             // Verify SHA256
             let hash = format!("{:x}", Sha256::digest(&bytes));
             assert_eq!(hash, LVGL_SHA256, "LVGL tarball SHA256 mismatch!");
-            let _ = fs::write(&cached, &bytes);
+            // Best effort: a failed write only costs the next build another download. Written to
+            // a temporary name first so two builds racing here never read a half-written file.
+            if fs::create_dir_all(cached.parent().unwrap()).is_ok() {
+                let tmp = cached.with_extension(format!("tmp{}", std::process::id()));
+                if fs::write(&tmp, &bytes).is_ok() && fs::rename(&tmp, &cached).is_err() {
+                    let _ = fs::remove_file(&tmp);
+                }
+            }
             bytes
         }
     };
 
-    // Extract
+    // Extract, leaving out the trees the build never reads (LVGL's own tests, docs, scripts and
+    // examples are about 110 MB of the 180 MB tree).
     let decoder = flate2::read::GzDecoder::new(&tarball[..]);
     let mut archive = tar::Archive::new(decoder);
-    archive
-        .unpack(out_dir)
-        .expect("Failed to extract LVGL tarball");
+    for entry in archive.entries().expect("Failed to read LVGL tarball") {
+        let mut entry = entry.expect("Failed to read LVGL tarball entry");
+        let skip = entry.path().is_ok_and(|p| {
+            p.components()
+                .nth(1)
+                .and_then(|c| c.as_os_str().to_str())
+                .is_some_and(|top| LVGL_UNUSED_DIRS.contains(&top))
+        });
+        if !skip {
+            entry
+                .unpack_in(out_dir)
+                .expect("Failed to extract LVGL tarball");
+        }
+    }
 
     assert!(
         lvgl_dir.join("lv_version.h").exists(),
